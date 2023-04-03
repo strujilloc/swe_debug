@@ -1,0 +1,15 @@
+steps:
+  - id: build-docker
+    name: gcr.io/cloud-builders/docker
+    dir: '${_DIR}'
+    args: ['build', '--network=cloudbuild', '-t', '${_IMAGE}', '.']
+
+images: ['${_IMAGE}']
+substitutions:
+  _DIR: '.'
+  _IMAGE: 'asia-northeast1-docker.pkg.dev/recursive-research-core/saisho-registry/${_PROJECT}:${_BUILD_TYPE}-${SHORT_SHA}'
+  _PROJECT: 'template'
+options:
+  logging: CLOUD_LOGGING_ONLY
+  dynamic_substitutions: true
+timeout: 600s

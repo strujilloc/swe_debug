@@ -1,0 +1,52 @@
+steps:
+  - id: python-requirements
+    name: '${_PYTHON}
+    dir: '${_DIR}'
+    entrypoint: pip
+    args: ['install', '-e', '.[dev]', '--user']
+    env:
+      - 'PIP_EXTRA_INDEX_URL=${_INDEX_URL}'
+
+  - id: python-black
+    name: '${_PYTHON}'
+    dir: '${_DIR}'
+    entrypoint: python
+    args: ['-m', 'black', 'src', '--check']
+    waitFor: ['python-requirements']
+
+  - id: python-isort
+    name: '${_PYTHON}'
+    dir: '${_DIR}'
+    entrypoint: python
+    args: ['-m', 'isort', 'src', '--check']
+    waitFor: ['python-requirements']
+
+  - id: python-pylint
+    name: '${_PYTHON}'
+    dir: '${_DIR}'
+    entrypoint: python
+    args: ['-m', 'pylint', 'src', '--fail-under=8.0']
+    waitFor: ['python-requirements']
+
+  - id: python-pyright
+    name: '${_PYTHON}'
+    dir: '${_DIR}'
+    entrypoint: python
+    args: ['-m', 'pyright']
+    waitFor: ['python-requirements']
+
+  - id: python-test
+    name: '${_PYTHON}'
+    dir: '${_DIR}'
+    entrypoint: python
+    args: ['-m', 'pytest', '.']
+    waitFor: ['python-requirements']
+
+substitutions:
+  _DIR: '.'
+  _PYTHON: 'python:3.9'
+  _INDEX_URL: https://asia-python.pkg.dev/recursive-research-core/recursive-common-pypi/simple/
+options:
+  logging: CLOUD_LOGGING_ONLY
+  dynamic_substitutions: true
+timeout: 300s

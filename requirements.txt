@@ -1,0 +1,2 @@
+# Dependencies go here!
+Flask == 2.2.3
