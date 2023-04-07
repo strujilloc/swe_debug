@@ -1,34 +1,25 @@
-FROM python:3.9 as base
-ENV PYTHONUNBUFFERED 0
+# For more information, please refer to https://aka.ms/vscode-docker-python
+FROM python:3.10-slim
 
-WORKDIR /app
-
-FROM base as build-phase
-
-COPY requirements.txt .
-COPY pyproject.toml .
-COPY src src/
-
-RUN pip install --upgrade pip
-# RUN pip install keyrings.tmp.gcp_artifact_registry_auth
-# ENV PIP_EXTRA_INDEX_URL https://asia-python.pkg.dev/recursive-research-core/recursive-common-pypi/simple/
-RUN pip install --no-cache-dir -t packages .
-
-FROM base as execution-phase
-
-COPY --from=build-phase /app/packages packages
-ENV PYTHONPATH packages
-# Set the environment variable to run Flask in development mode
-ENV FLASK_ENV=development
-
-# Expose port 5000 for the Flask application to listen on
 EXPOSE 3001
 
-# Start the Flask application when the container is run
-# CMD ["python", "app.py"]
-CMD python -m recursiveai.app
-# TODO: Install other runtime dependencies
-# TODO: Copy aditionl files
+# Keeps Python from generating .pyc files in the container
+ENV PYTHONDONTWRITEBYTECODE=1
 
-# TODO: Replace with actual package
-# CMD python -u -m template
+# Turns off buffering for easier container logging
+ENV PYTHONUNBUFFERED=1
+
+# Install pip requirements
+COPY requirements.txt .
+RUN python -m pip install -r requirements.txt
+
+WORKDIR /app
+COPY . /app
+
+# Creates a non-root user with an explicit UID and adds permission to access the /app folder
+# For more info, please refer to https://aka.ms/vscode-docker-python-configure-containers
+RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
+USER appuser
+
+# During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
+CMD ["gunicorn", "--bind", "0.0.0.0:3001", "src.recursiveai/app:app"]
